@@ -6,12 +6,12 @@
 Run this command, if necessary, to ensure your key is not publicly viewable.
 
 ```
-chmod 400 "key pair.pem"
+chmod 400 "keyPair.pem"
 ```
 
 Acces the EC2 instance
 ```
-ssh -i "key pair.pem" ec2-user@ec2-54-145-77-91.compute-1.amazonaws.com
+ssh -i "keyPair.pem" ec2-user@ec2-54-145-77-91.compute-1.amazonaws.com
 ```
 
 Install Java

@@ -18,9 +18,9 @@ This project focuses on integrating Kafka with AWS to manage data streaming and 
 
 **Steps:**
 1. **Set up Key Pair for EC2:**
-   Ensure the key pair (e.g., "key pair.pem") is not publicly viewable:
+   Ensure the key pair (e.g., "keypair.pem") is not publicly viewable:
     ```bash
-    chmod 400 "key pair.pem"
+    chmod 400 "keypair.pem"
     ```
 2. **Access the EC2 Instance:**
    ```bash

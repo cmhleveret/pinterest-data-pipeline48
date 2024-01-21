@@ -1,3 +1,3 @@
-key pair name.pem
-'key pair.pem'
+keyPairName.pem
+KeyPair.pem
 rdsCreds.py
