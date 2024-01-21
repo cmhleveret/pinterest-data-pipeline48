@@ -6,18 +6,17 @@ import boto3
 import json
 import sqlalchemy
 from sqlalchemy import text
-
+from rdsCreds import RDS_HOST, RDS_PASSWORD, RDS_HOST
 
 random.seed(100)
-
 
 class AWSDBConnector:
 
     def __init__(self):
 
-        self.HOST = "pinterestdbreadonly.cq2e8zno855e.eu-west-1.rds.amazonaws.com"
-        self.USER = 'project_user'
-        self.PASSWORD = ':t%;yCY3Yjg'
+        self.HOST = RDS_HOST
+        self.USER = RDS_HOST
+        self.PASSWORD = RDS_PASSWORD
         self.DATABASE = 'pinterest_data'
         self.PORT = 3306
         
