@@ -48,6 +48,65 @@ This project focuses on integrating Kafka with AWS to manage data streaming and 
 5. **Run the Python Script:**
    Execute the Python script to start data processing.
 
+## S3 Bucket and MSK Connect Integration
+
+**Note:** You do not need to create an S3 bucket, IAM role, or VPC Endpoint to S3 as they are pre-configured.
+
+1. **Locate S3 Bucket:**
+   Go to the S3 console and find the bucket with your UserId. The format should be `user-<your_UserId>-bucket`.
+
+2. **Download and Copy Confluent.io S3 Connector:**
+   On your EC2 client, perform the following steps to download the Confluent.io Amazon S3 Connector and copy it to your identified S3 bucket:
+
+   ```bash
+   # Assume admin user privileges
+   sudo -u ec2-user -i
+   
+   # Create directory for the connector
+   mkdir kafka-connect-s3 && cd kafka-connect-s3
+   
+   # Download connector from Confluent
+   wget https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-s3/versions/10.0.3/confluentinc-kafka-connect-s3-10.0.3.zip
+   
+   # Copy connector to your S3 bucket
+   aws s3 cp ./confluentinc-kafka-connect-s3-10.0.3.zip s3://user-<your_UserId>-bucket/kafka-connect-s3/
+
+## Create Custom Plugin in MSK Connect
+
+1. **Create Custom Plugin:**
+   - Navigate to the MSK Connect console in your AWS account.
+   - Create a custom plugin with the name: `<your_UserId>-plugin`.
+   -use the .zip uploaded to s3 earlier
+
+2. **Configure Bucket Name:**
+   - Ensure the bucket name is correctly set to `user-<your_UserId>-bucket`.
+
+3. **Set Topics Regex:**
+   - In the connector configuration, set `topics.regex` to `<your_UserId>.*`.
+   - This configuration ensures that data from Kafka topics is correctly routed to your S3 bucket.
+
+4. **Select IAM Role for Permissions:**
+   - When building the connector, choose the IAM role with the name `<your_UserId>-ec2-access-role`.
+   - This role should have the necessary permissions for the connector to interact with both MSK and your S3 bucket.
+
+```
+connector.class=io.confluent.connect.s3.S3SinkConnector
+# same region as our bucket and cluster
+s3.region=us-east-1
+flush.size=1
+schema.compatibility=NONE
+tasks.max=3
+# include nomeclature of topic name, given here as an example will read all data from topic names starting with msk.topic....
+topics.regex=<YOUR_UUID>.*
+format.class=io.confluent.connect.s3.format.json.JsonFormat
+partitioner.class=io.confluent.connect.storage.partitioner.DefaultPartitioner
+value.converter.schemas.enable=false
+value.converter=org.apache.kafka.connect.json.JsonConverter
+storage.class=io.confluent.connect.s3.storage.S3Storage
+key.converter=org.apache.kafka.connect.storage.StringConverter
+s3.bucket.name=<BUCKET_NAME>
+```
+
 # License
 ```
 License details go here

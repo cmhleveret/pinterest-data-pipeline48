@@ -93,3 +93,15 @@ You will need to create the following three topics
 ```
 ./kafka-topics.sh --bootstrap-server b-2.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-1.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-3.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098 --command-config client.properties --create --topic 0e2bc66a6297.user
 ```
+
+```
+# assume admin user privileges
+sudo -u ec2-user -i
+# create directory where we will save our connector 
+mkdir kafka-connect-s3 && cd kafka-connect-s3
+# download connector from Confluent
+wget https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-s3/versions/10.0.3/confluentinc-kafka-connect-s3-10.0.3.zip
+# copy connector to our S3 bucket
+aws s3 cp ./confluentinc-kafka-connect-s3-10.0.3.zip s3://user-0e2bc66a6297-bucket/kafka-connect-s3/
+
+```
