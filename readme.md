@@ -155,6 +155,17 @@ client.sasl.jaas.config = software.amazon.msk.auth.iam.IAMLoginModule required a
 # The SASL client bound by "sasl.jaas.config" invokes this clas
 client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClientCallbackHandler
 ```
+Add this to path
+```
+export CLASSPATH=/home/ec2-user/kafka_2.12-2.8.1/libs/aws-msk-iam-auth-1.1.5-all.jar
+```
+Add this to .bashrc so it runs every time the instance starts
+```
+ nano ~/.bashrc
+
+ #Add line
+ export CLASSPATH=/home/ec2-user/kafka_2.12-2.8.1/libs/aws-msk-iam-auth-1.1.5-all.jar
+```
 
 ## Start the server and use user_posting_emulation_API.py to test it 
 ### On the Ec2 Instance start the server
