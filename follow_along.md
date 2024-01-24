@@ -34,6 +34,13 @@ Add this to path
 ```
 export CLASSPATH=/home/ec2-user/kafka_2.12-2.8.1/libs/aws-msk-iam-auth-1.1.5-all.jar
 ```
+Add this to .bashrc
+```
+ nano ~/.bashrc
+
+ #Add line
+ export CLASSPATH=/home/ec2-user/kafka_2.12-2.8.1/libs/aws-msk-iam-auth-1.1.5-all.jar
+```
 
 
 # Cluster auth ARM: 
@@ -104,4 +111,56 @@ wget https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connec
 # copy connector to our S3 bucket
 aws s3 cp ./confluentinc-kafka-connect-s3-10.0.3.zip s3://user-0e2bc66a6297-bucket/kafka-connect-s3/
 
+```
+
+# Create method on AWS API 
+add resource called `{proxy+}`
+Add method to this HTTP, ANY, and publick ipv4 of ec2 instance 
+Deploy
+Invoke URL = https://iijg6a7epl.execute-api.us-east-1.amazonaws.com/Development
+
+# Installing Confluent package for REST proxy on EC2 client
+```
+ssh -i "KeyPair.pem" ec2-user@ec2-54-145-77-91.compute-1.amazonaws.com
+```
+```
+sudo wget https://packages.confluent.io/archive/7.2/confluent-7.2.0.tar.gz
+tar -xvzf confluent-7.2.0.tar.gz
+```
+```
+cd confluent-7.2.0/etc/kafka-rest
+```
+```
+nano kafka-rest.properties
+```
+
+#id=kafka-rest-test-server
+#schema.registry.url=http://localhost:8081
+#zookeeper.connect=localhost:2181
+bootsrap.servers=b-2.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-1.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:9098,b-3.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaw$
+zookeeper.connect=z-2.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:2181,z-1.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazonaws.com:2181,z-3.pinterestmskcluster.w8g8jt.c12.kafka.us-east-1.amazona$
+#bootstrap.servers=PLAINTEXT://localhost:9092
+#
+# Configure interceptor classes for sending consumer and producer metrics to Confluent Control Center
+# Make sure that monitoring-interceptors-<version>.jar is on the Java class path
+#consumer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor
+#producer.interceptor.classes=io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor
+# Sets up TLS for encryption and SASL for authN.
+client.security.protocol = SASL_SSL
+
+# Identifies the SASL mechanism to use.
+client.sasl.mechanism = AWS_MSK_IAM
+
+# Binds SASL client implementation.
+client.sasl.jaas.config = software.amazon.msk.auth.iam.IAMLoginModule required awsRoleArn="arn:aws:iam::584739742957:role/0e2bc66a6297-ec2-access-role";
+
+# Encapsulates constructing a SigV4 signature based on extracted credentials.
+# The SASL client bound by "sasl.jaas.config" invokes this clas
+client.sasl.client.callback.handler.class = software.amazon.msk.auth.iam.IAMClientCallbackHandler
+
+```
+confluent-7.2.0/bin
+```
+```
+./kafka-rest-start /home/ec2-user/confluent-7.2.0/etc/kafka-rest/kafka-rest.properties
 ```
