@@ -60,21 +60,26 @@ def run_infinite_post_data_loop():
             
             for row in geo_selected_row:
                 geo_result = dict(row._mapping)
+                if 'timestamp' in geo_result:
+                     geo_result['timestamp'] = geo_result['timestamp'].isoformat()
+            
 
             user_string = text(f"SELECT * FROM user_data LIMIT {random_row}, 1")
             user_selected_row = connection.execute(user_string)
             
             for row in user_selected_row:
                 user_result = dict(row._mapping)
+                if 'date_joined' in user_result:
+                    user_result['date_joined'] = user_result['date_joined'].isoformat()
             
             print(pin_result)
             post_to_API("0e2bc66a6297.pin", pin_result)
             # {'index': 8304, 'unique_id': '5b6d0913-25e4-43ab-839d-85d5516f78a4', 'title': 'The #1 Reason You’re Not His Priority Anymore - Matthew Coast', 'description': '#lovequotes #matchmaker #matchmadeinheaven #loveyourself #respectyourself', 'poster_name': 'Commitment Connection', 'follower_count': '51k', 'tag_list': 'Wise Quotes,Quotable Quotes,Words Quotes,Wise Words,Quotes To Live By,Great Quotes,Motivational Quotes,Inspirational Quotes,Funny Quotes', 'is_image_or_video': 'image', 'image_src': 'https://i.pinimg.com/originals/c6/64/ee/c664ee71524fb5a6e7b7b49233f93b43.png', 'downloaded': 1, 'save_location': 'Local save in /data/quotes', 'category': 'quotes'}
             print(geo_result)
-            # post_to_API("0e2bc66a6297.geo", geo_result)
+            post_to_API("0e2bc66a6297.geo", geo_result)
             # {'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
             print(user_result)
-            # post_to_API("0e2bc66a6297.user", user_result)
+            post_to_API("0e2bc66a6297.user", user_result)
             # {'ind': 2863, 'first_name': 'Dylan', 'last_name': 'Holmes', 'age': 32, 'date_joined': datetime.datetime(2016, 10, 23, 14, 6, 51)}
 
 
