@@ -318,6 +318,87 @@ if __name__ == "__main__":
    display(df)
    ```
 
+## Reading from S3 with Databricks
+
+This section explains how to read data from an S3 bucket using Databricks.
+
+1. **Listing Files in S3 Bucket**: 
+   ```python
+   display(dbutils.fs.ls("/mnt/s3_bucket/topics/0e2bc66a6297.pin/partition=0/"))
+   ```
+   This command lists all the files in the specified directory of the S3 bucket. It's useful for verifying the files you want to process are present.
+
+2. **Setting Spark Configuration**:
+   ```
+   %sql
+   SET spark.databricks.delta.formatCheck.enabled=false
+   ```
+   This SQL command disables the Delta format check in Spark. It's useful when dealing with non-Delta format files.
+
+3. **eading JSON Files from S3 Bucket:**:
+   ```
+   # File location and type
+   # Asterisk(*) indicates reading all the content of the specified file that have .json extension
+   file_location = "/mnt/s3_bucket/topics/0e2bc66a6297.pin/partition=0/*.json" 
+   file_type = "json"
+   # Ask Spark to infer the schema
+   infer_schema = "true"
+   # Read in JSONs from mounted S3 bucket
+   posts_df = spark.read.format(file_type) \
+   .option("inferSchema", infer_schema) \
+   .load(file_location)
+   # Display Spark dataframe to check its content
+   display(posts_df)
+   ```
+
+   This Python snippet reads all JSON files from the specified location in the mounted S3 bucket. It infers the schema of the JSON files automatically and loads them into a Spark DataFrame, which is then displayed.
+
+## Cleaning Data
+
+#### Pinterest Geolocation Data Cleaning
+- **File**: `pinterest-geolocation-data-cleaning.ipynb`
+- **Key Steps**:
+  1. Create a new column `coordinates` based on `latitude` and `longitude` columns.
+  2. Drop the `latitude` and `longitude` columns.
+  3. Convert `timestamp` from string to timestamp data type.
+  4. Reorder DataFrame columns to `ind`, `country`, `coordinates`, `timestamp`.
+  5. Replace irrelevant data in each column with `None`.
+
+#### Pinterest Posts Data Cleaning
+- **File**: `pinterest-posts-data-cleaning.ipynb`
+- **Key Steps**:
+  1. Replace empty or irrelevant entries in each column with `None`.
+  2. Transform `follower_count` to ensure numeric entries and convert to `int`.
+  3. Ensure numeric columns have numeric data types.
+  4. Clean `save_location` to include only the path.
+  5. Rename `index` column to `ind`.
+  6. Reorder DataFrame columns to include `ind`, `unique_id`, `title`, `description`, `follower_count`, `poster_name`, `tag_list`, `is_image_or_video`, `image_src`, `save_location`, `category`.
+
+#### Pinterest User Data Cleaning
+- **File**: `pinterest-user-data-cleaning.ipynb`
+- **Key Steps**:
+  1. Create a new column `user_name` by concatenating `first_name` and `last_name`.
+  2. Drop `first_name` and `last_name` columns.
+  3. Convert `date_joined` from string to timestamp data type.
+  4. Reorder DataFrame columns to `ind`, `user_name`, `age`, `date_joined`.
+  5. Replace irrelevant data in each column with `None`.
+
+## Querying Cleaned Data
+- **File**: `querying-cleaned-data.ipynb`
+- **Key Steps**:
+  1. Query to find the most popular Pinterest category based on country, returning columns for country, category, and category count.
+  2. Drop duplicate rows and group by country and category to count the number of posts.
+  3. Filter category counts greater than 1 and order the table in descending order.
+  4. Use window specification to assign ranks within each country partition and keep only the top category for each country.
+  5. Query to determine the number of posts each category had between 2018 and 2022, with columns for post year, category, and category count.
+  6. Extract the year from timestamp, group by year and category, and sum posts for each category per year.
+  7. Join geo and user tables, followed by a join with post tables. Select appropriate columns and apply window specification for ranking.
+  8. Create age groups and group data by age group and category to find trends.
+  9. Use window specification for ranking within country partitions.
+  10. Calculate mean follower count grouped by age group.
+  11. Extract year from timestamp for posts within a specified range of years.
+
+
 # License
 ```
 License details go here
