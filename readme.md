@@ -398,6 +398,31 @@ This section explains how to read data from an S3 bucket using Databricks.
   10. Calculate mean follower count grouped by age group.
   11. Extract year from timestamp for posts within a specified range of years.
 
+##
+
+## Batch Processing with AWS MWAA
+### The following steps outline how to created a dag for apache airflow to run Databricks notebooks
+
+Get cluster id from databricks notebook 
+
+```
+spark.conf.get("spark.databricks.clusterUsageTags.clusterId")
+```
+
+Get path from databricks notebook 
+
+```
+dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
+```
+### create dag.py
+```
+../databricks-airflow/0e2bc66a6297_dag
+```
+### Upload dag to correct bucket in s3
+### Access Managed Apache Airflow GUI in AWS to enable and run DAG 
+Run the dag manually to test it
+
+
 
 # License
 ```
