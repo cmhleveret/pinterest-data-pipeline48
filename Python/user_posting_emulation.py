@@ -41,6 +41,19 @@ def post_to_API(topic_name, result):
     print(response)
     return response
 
+def stream_to_API(stream_name, partition_key, result):
+    invoke_url = f"https://iijg6a7epl.execute-api.us-east-1.amazonaws.com/Development/streams/{stream_name}/record"
+    #To send JSON messages you need to follow this structure
+    payload = json.dumps({
+    "StreamName": stream_name,
+    "Data":  result,
+            "PartitionKey": partition_key
+            })
+    headers = {'Content-Type': 'application/json'}
+    response = requests.request("PUT", invoke_url, headers=headers, data=payload)
+    print(response)
+    return response
+
 def run_infinite_post_data_loop():
     while True:
         sleep(random.randrange(0, 2))
@@ -73,13 +86,16 @@ def run_infinite_post_data_loop():
                     user_result['date_joined'] = user_result['date_joined'].isoformat()
             
             print(pin_result)
-            post_to_API("0e2bc66a6297.pin", pin_result)
+            # post_to_API("0e2bc66a6297.pin", pin_result)
+            stream_to_API("streaming-0e2bc66a6297-pin", "partition-1", pin_result)
             # {'index': 8304, 'unique_id': '5b6d0913-25e4-43ab-839d-85d5516f78a4', 'title': 'The #1 Reason You’re Not His Priority Anymore - Matthew Coast', 'description': '#lovequotes #matchmaker #matchmadeinheaven #loveyourself #respectyourself', 'poster_name': 'Commitment Connection', 'follower_count': '51k', 'tag_list': 'Wise Quotes,Quotable Quotes,Words Quotes,Wise Words,Quotes To Live By,Great Quotes,Motivational Quotes,Inspirational Quotes,Funny Quotes', 'is_image_or_video': 'image', 'image_src': 'https://i.pinimg.com/originals/c6/64/ee/c664ee71524fb5a6e7b7b49233f93b43.png', 'downloaded': 1, 'save_location': 'Local save in /data/quotes', 'category': 'quotes'}
             print(geo_result)
-            post_to_API("0e2bc66a6297.geo", geo_result)
+            # post_to_API("0e2bc66a6297.geo", geo_result)
+            stream_to_API("streaming-0e2bc66a6297-geo", "partition-1", geo_result)
             # {'ind': 7528, 'timestamp': datetime.datetime(2020, 8, 28, 3, 52, 47), 'latitude': -89.9787, 'longitude': -173.293, 'country': 'Albania'}
             print(user_result)
-            post_to_API("0e2bc66a6297.user", user_result)
+            # post_to_API("0e2bc66a6297.user", user_result)
+            stream_to_API("streaming-0e2bc66a6297-user", "partition-1", user_result)
             # {'ind': 2863, 'first_name': 'Dylan', 'last_name': 'Holmes', 'age': 32, 'date_joined': datetime.datetime(2016, 10, 23, 14, 6, 51)}
 
 

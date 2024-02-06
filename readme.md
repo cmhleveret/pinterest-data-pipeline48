@@ -318,6 +318,8 @@ if __name__ == "__main__":
    display(df)
    ```
 
+### all databricks notebooks can be found in  `./databricks-notebooks`
+
 ## Reading from S3 with Databricks
 
 This section explains how to read data from an S3 bucket using Databricks.
@@ -398,8 +400,6 @@ This section explains how to read data from an S3 bucket using Databricks.
   10. Calculate mean follower count grouped by age group.
   11. Extract year from timestamp for posts within a specified range of years.
 
-##
-
 ## Batch Processing with AWS MWAA
 ### The following steps outline how to created a dag for apache airflow to run Databricks notebooks
 
@@ -419,12 +419,139 @@ dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath()
 ../databricks-airflow/0e2bc66a6297_dag
 ```
 ### Upload dag to correct bucket in s3
-### Access Managed Apache Airflow GUI in AWS to enable and run DAG 
-Run the dag manually to test it
+To test the DAG Access the Managed Apache Airflow GUI in AWS to enable and run the DAG manually. 
 
+# Stream Processing: AWS Kinesis
+This section provides a concise overview of the configuration and use of AWS Kinesis for streaming data related to Pinterest tables in real time.
 
+### Steps
+1. **Creating Data Streams**
+   - Three Kinesis data streams are created in the AWS GUI for different types of Pinterest data:
+     - `streaming-<your_UserId>-pin` for Pinterest pin data.
+     - `streaming-<your_UserId>-geo` for geographical information.
+     - `streaming-<your_UserId>-user` for user data.
+   - More detailed instructions can be found [Here](https://colab.research.google.com/github/AI-Core/Content-Public/blob/main/Content/units/Cloud-and-DevOps/3.%20Essential%20Cloud%20Technology/12.%20AWS%20Kinesis/Notebook.ipynb)
 
-# License
+2. **Configuring REST API for Kinesis Actions**
+   - A REST API is configured to allow interaction with Kinesis, supporting operations such as stream listing, creation, description, deletion, and record addition.
+   - Permissions for these actions are facilitated through the IAM role named `<your_UserId-kinesis-access-role>`. This role's ARN is used in setting up the execution role for the API's integration points.
+   - More detailed instructions can be found [Here](
+   https://colab.research.google.com/github/AI-Core/Content-Public/blob/main/Content/units/Cloud-and-DevOps/4.%20AWS%20Serverless%20API%20Stack/3.%20Integrating%20API%20Gateway%20with%20Kinesis/Notebook.ipynb)
+
+3. **Script for Data Streaming**
+   - The `user_posting_emulation_streaming.py` script is introduced to send data to the configured Kinesis streams. It ensures the data from each Pinterest table is appropriately streamed to its designated Kinesis stream. 
+   - The follwoing outlines the method added to the 'user_posting_emulation.py' to emulate streaming.
+   ```
+   def stream_to_API(stream_name, partition_key, result):
+    invoke_url = f"https://iijg6a7epl.execute-api.us-east-1.amazonaws.com/Development/streams/{stream_name}/record"
+    #To send JSON messages you need to follow this structure
+    payload = json.dumps({
+    "StreamName": stream_name,
+    "Data":  result,
+            "PartitionKey": partition_key
+            })
+    headers = {'Content-Type': 'application/json'}
+    response = requests.request("PUT", invoke_url, headers=headers, data=payload)
+    print(response)
+    return response
+    ```
+    ```
+    stream_to_API("streaming-0e2bc66a6297-pin", "partition-1", pin_result)
+    ```
+
+4. **Read data from from kinesis streams to Databricks**:
+   This section outlines the process of reading AWS credentials from a Delta table and setting up Spark streaming reads from Kinesis streams using PySpark. The code for the follwoing steps can be found at ./databricks-notebooks/read-from-kinesis.ipynb
+
+   ### Reading AWS Credentials
+
+   **Imports**: The script begins by importing necessary PySpark SQL types and functions, along with the `urllib` library for URL encoding.
+
+   **Delta Table Path**: It defines the path to a Delta table storing AWS credentials (`dbfs:/user/hive/warehouse/authentication_credentials`).
+
+   **Read Delta Table**: AWS credentials are read into a Spark DataFrame (`aws_keys_df`) using the Delta format.
+
+   **Extract Credentials**: The script extracts `Access key ID` and `Secret access key` from the DataFrame, indicating the table contains these specific columns.
+
+   **Encode Secret Key**: The `Secret access key` is URL-encoded using `urllib.parse.quote` for safe inclusion in URLs/API requests.
+
+   ### Setting Up Spark Streaming
+
+   1. **Disable Delta Format Check**: A SQL command is used to disable format checks for Delta tables, which may be necessary for compatibility or performance reasons.
+
+   2. **Kinesis Stream Reads**: The script configures Spark to read from Kinesis streams (`geo_stream`, `pin_stream`, `user_stream`) using the extracted and encoded AWS credentials. Each stream read is configured with:
+      - The stream name (e.g., `streaming-0e2bc66a6297-geo`).
+      - The initial position set to `earliest` for reading from the start of the stream.
+      - The AWS region (e.g., `us-east-1`).
+      - AWS access and secret keys for authentication.
+
+   3. **Data Processing**: For each stream, data is cast to a string format for further processing or analysis.
+
+5. **Transform Kinesis streams in databricks**
+One the spark streams have been created we are able to transform the data in the same manner outlined in the 'cleaning data section' passing the streams to their respecive cleaning methods in the dollowing Databricks notebooks.
+   ```
+   pinterest-user-data-cleaning.ipynb
+   ```
+   ```
+   pinterest-pin-data-cleaning.ipynb
+   ```
+   ```
+   pinterest-geo-data-cleaning.ipynb
+   ```
+
+6. **Write streaming data to delta tables**:
+Once the data has been transfomed it can be written to a Delta table in Databricks using the method below:
+   ```
+   def write_to_delta(table, table_name):
+   table.writeStream \
+      .format("delta") \
+      .outputMode("append") \
+      .option("checkpointLocation", "/tmp/kinesis/_checkpoints/") \
+      .table(table_name)
+   ```
+
+## File Structure
+```
+project-root/
+│
+├── databricks-notebooks/
+│ ├── AirFlow/
+│ │ └── DailyDag.ipynb
+│ │
+│ ├── Kinesis/
+│ │ ├── clean-streaming-data-geo.ipynb
+│ │ ├── clean-streaming-data-pin.ipynb
+│ │ ├── clean-streaming-data-user.ipynb
+│ │ ├── main.ipynb
+│ │ ├── read-from-kinesis.ipynb
+│ │ └── write-to-delta-table.ipynb
+│ │
+│ └── s3/
+│ ├── mounting-to-s3.ipynb
+│ └── reading-from-s3.ipynb
+│
+├── spark/
+│ ├── pinterest-geolocation-data-cleaning.ipynb
+│ ├── pinterest-posts-data-cleaning.ipynb
+│ ├── pinterest-user-data-cleaning.ipynb
+│ └── querying-cleaned-data.ipynb
+│
+├── Python/
+│ └── api_response.py
+| ├── KeyPair.pem
+| ├── keyPairName.pem
+| ├── rdsCreds.py
+| ├── s3Creds.py
+| ├── user_posting_emulation_initial.py
+| ├── user_posting_emulation_streaming_initial.py
+| ├── user_posting_emulation_streaming.py
+| ├── user_posting_emulation.py
+├── .gitignore
+├── follow_along.md
+└── readme.md
+
+```
+
+## License
 ```
 License details go here
 ```
